@@ -2,6 +2,7 @@ package com.shuozhuoding.springtest;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.log.LogFormatUtils;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -29,6 +30,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 
+@ServletComponentScan
 @SpringBootTest
 class SpringTestApplicationTests {
 

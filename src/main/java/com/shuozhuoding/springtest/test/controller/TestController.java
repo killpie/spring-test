@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.config.Task;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -65,13 +66,27 @@ public class TestController {
   }
 
   @RequestMapping("/createTask")
-  public String createTask() {
-    String uuid = UUID.randomUUID().toString();
-    DeferredResult<String> deferredResult = new DeferredResult<>(1000000L);
+  public DeferredResult<String> createTask(String uuid) {
+    LOGGER.info("接口createTask，ID[{}]任务开始",uuid);
+    StopWatch stopWatch = new StopWatch(" DeferredResult test 容器线程");
+    stopWatch.start("容器线程");
+    LOGGER.info("接口createTask，返回值DeferredResult 异步请求开始");
+    //超时时间100s
+    DeferredResult<String> deferredResult = new DeferredResult<>(100000L);
+    StopWatch t = new StopWatch(" DeferredResult test 工作线程");
+    t.start("工作线程");
+    deferredResult.onCompletion(()->{
+      LOGGER.info("接口createTask，返回值DeferredResult onCompletion 工作线程处理完毕");
+      t.stop();
+      LOGGER.info("接口createTask，{}秒",t.getTotalTimeSeconds());
+    });
     taskMap.put(uuid, deferredResult);
-    return uuid;
+    LOGGER.info("接口createTask，返回值DeferredResult 异步请求结束");
+    stopWatch.stop();
+    LOGGER.info("接口createTask，{}秒",stopWatch.getTotalTimeSeconds());
+    return deferredResult;
   }
-
+//887843e4-1034-4a1b-8a75-c89f23f51fb4
 
   @RequestMapping("/queryTaskState")
   public String queryTaskState(String uuid) {
@@ -82,6 +97,7 @@ public class TestController {
     if (deferredResult.hasResult()) {
       return deferredResult.getResult().toString();
     } else {
+      LOGGER.info("接口queryTaskState，ID[{}]任务进行中",uuid);
       return "进行中";
     }
   }
@@ -95,7 +111,9 @@ public class TestController {
     if (deferredResult.hasResult()) {
       return "已完成，无需再次设置";
     } else {
+      //未完成设置为完成
       deferredResult.setResult("已完成");
+      LOGGER.info("接口changeTaskState，将任务ID{},设置为处理完成",uuid);
       return "已完成";
     }
   }
